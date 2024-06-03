@@ -1,25 +1,52 @@
-const http = require("http");
+const http = require("http")
+const fs = require('fs');
 const server = http.createServer(
-    ((req,res)=>
-    {
-        if(req.url==='/home') 
-            {
-                res.write('<html><body>Welcome home</body></html>')   
-               
-            }  
+    (req,res)=>
+        {
+            if(req.url==="/")
+               {
+                if (fs.existsSync('message.txt')) {
+                    messages = fs.readFileSync('message.txt', 'utf-8');
+                  }
             
-            if(req.url==='/about') 
-                {
-                    res.write('<html><body> Welcome to About Us page</body></html>')   
-                   
-                }  
-                if(req.url==='/node') 
-                    {
-             res.write('<html><body>  Welcome to my Node Js project</body></html>')   
-                       
-                    }                
-    })
+                
+                 
+                    messageHtml = `<p>${messages}</p>`;
+                 
+                  res.write(`<html>
+                    <body>
+                    ${messageHtml}<form action="/message" method="post">
+                           <input type="text" name="message"></input>
+                           <button type="submit">send</button>
+                          
+                        </form>
+                    </body>
+                  </html>`);
+                  return res.end();
+               }
 
-)
 
-server.listen(3000);
+             if (req.url === '/message' && req.method === 'POST')
+             {
+                const body = [];
+                req.on('data', (chunk) => {
+                  console.log(chunk);
+                  body.push(chunk);
+                
+                })
+                req.on('end', () => {
+                    const parsedBody = Buffer.concat(body).toString();
+                    const message = parsedBody.split('=')[1];
+                    fs.writeFileSync('message.txt', message);
+                  });
+                  res.statusCode = 302;
+                  res.setHeader('Location', '/');
+                  return res.end();
+             }
+                
+                  
+           
+        }
+);
+server.listen(4000);
+
